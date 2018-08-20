@@ -61,6 +61,23 @@ class NetworkInterfaceFilter(RelatedResourceFilter):
     RelatedIdsExpression = "properties.networkProfile.networkInterfaces[0].id"
 
 
+@VirtualMachine.action_registry.register('poweroff')
+class VmPowerOffAction(BaseAction):
+
+    schema = type_schema('poweroff')
+
+    def __init__(self, data=None, manager=None, log_dir=None):
+        super(VmPowerOffAction, self).__init__(data, manager, log_dir)
+        self.client = self.manager.get_client()
+
+    def power_off(self, resource_group, vm_name):
+        self.client.virtual_machines.power_off(resource_group, vm_name)
+
+    def process(self, vms):
+        for vm in vms:
+            self.power_off(vm['resourceGroup'], vm['name'])
+
+
 @VirtualMachine.action_registry.register('stop')
 class VmStopAction(BaseAction):
 
@@ -70,12 +87,12 @@ class VmStopAction(BaseAction):
         super(VmStopAction, self).__init__(data, manager, log_dir)
         self.client = self.manager.get_client()
 
-    def stop(self, resource_group, vm_name):
-        self.client.virtual_machines.power_off(resource_group, vm_name)
+    def deallocate(self, resource_group, vm_name):
+        self.client.virtual_machines.deallocate(resource_group, vm_name)
 
     def process(self, vms):
         for vm in vms:
-            self.stop(vm['resourceGroup'], vm['name'])
+            self.deallocate(vm['resourceGroup'], vm['name'])
 
 
 @VirtualMachine.action_registry.register('start')
