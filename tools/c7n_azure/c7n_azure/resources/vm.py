@@ -70,12 +70,12 @@ class VmPowerOffAction(BaseAction):
         super(VmPowerOffAction, self).__init__(data, manager, log_dir)
         self.client = self.manager.get_client()
 
-    def power_off(self, resource_group, vm_name):
+    def poweroff(self, resource_group, vm_name):
         self.client.virtual_machines.power_off(resource_group, vm_name)
 
     def process(self, vms):
         for vm in vms:
-            self.power_off(vm['resourceGroup'], vm['name'])
+            self.poweroff(vm['resourceGroup'], vm['name'])
 
 
 @VirtualMachine.action_registry.register('stop')
