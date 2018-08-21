@@ -87,12 +87,12 @@ class VmStopAction(BaseAction):
         super(VmStopAction, self).__init__(data, manager, log_dir)
         self.client = self.manager.get_client()
 
-    def deallocate(self, resource_group, vm_name):
+    def stop(self, resource_group, vm_name):
         self.client.virtual_machines.deallocate(resource_group, vm_name)
 
     def process(self, vms):
         for vm in vms:
-            self.deallocate(vm['resourceGroup'], vm['name'])
+            self.stop(vm['resourceGroup'], vm['name'])
 
 
 @VirtualMachine.action_registry.register('start')
