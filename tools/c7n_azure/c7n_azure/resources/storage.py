@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from azure.mgmt.storage.models import IPRule, \
+    NetworkRuleSet, StorageAccountUpdateParameters, VirtualNetworkRule
+from c7n.filters.core import type_schema
+from c7n_azure.actions import AzureBaseAction
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 
@@ -24,3 +28,50 @@ class Storage(ArmResourceManager):
         client = 'StorageManagementClient'
         enum_spec = ('storage_accounts', 'list', None)
         diagnostic_settings_enabled = False
+
+
+@Storage.action_registry.register('set-network-rules')
+class StorageSetNetworkRulesAction(AzureBaseAction):
+
+    schema = type_schema(
+        'set-network-rules',
+        required=['default-action'],
+        **{
+            'default-action': {'enum': ['Allow', 'Deny']},
+            'bypass': {'type': 'string'},
+            'ip-rules': {
+                'type': 'array',
+                'items': {'ip-address-or-range': {'type': 'string'}}
+            },
+            'virtual-network-rules': {
+                'type': 'array',
+                'items': {'virtual-network-resource-id': {'type': 'string'}}
+            }
+        }
+    )
+
+    def _prepare_processing(self,):
+        self.client = self.manager.get_client()
+
+    def _process_resource(self, resource):
+        ruleSet = NetworkRuleSet(default_action=self.data['default-action'])
+
+        if 'ip-rules' in self.data:
+            ruleSet.ip_rules = [
+                IPRule(ip_address_or_range=r['ip-address-or-range'], action='Allow')
+                for r in self.data['ip-rules']]
+
+        if 'virtual-network-rules' in self.data:
+            ruleSet.virtual_network_rules = [
+                VirtualNetworkRule(
+                    virtual_network_resource_id=r['virtual-network-resource-id'],
+                    action='Allow')
+                for r in self.data['virtual-network-rules']]
+
+        if 'bypass' in self.data:
+            ruleSet.bypass = self.data['bypass']
+
+        self.client.storage_accounts.update(
+            resource['resourceGroup'],
+            resource['name'],
+            StorageAccountUpdateParameters(network_rule_set=ruleSet))
