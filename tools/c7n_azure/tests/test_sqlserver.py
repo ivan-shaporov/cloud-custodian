@@ -52,6 +52,11 @@ class SqlServerTest(BaseTest):
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
             'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
                 {'type': 'metric',
                  'metric': 'dtu_consumption_percent',
                  'op': 'lt',
