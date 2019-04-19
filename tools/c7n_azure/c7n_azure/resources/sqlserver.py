@@ -26,6 +26,7 @@ class SqlServer(ArmResourceManager):
         client = 'SqlManagementClient'
         enum_spec = ('servers', 'list', None)
 
+
 @SqlServer.filter_registry.register('firewall')
 class SqlServerFirewallFilter(ValueFilter):
     """Filters SQL servers by the firewall rules
