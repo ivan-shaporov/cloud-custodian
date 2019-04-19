@@ -11,6 +11,11 @@ Filters
     - Metric Filter - Filter on metrics from Azure Monitor - (see `SQL Server Supported Metrics <https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-supported-metrics#microsoftsqlservers/>`_)
     - Tag Filter - Filter on tag presence and/or values
     - Marked-For-Op Filter - Filter on tag that indicates a scheduled operation for a resource
+- ``firewall``
+  Filter based on firewall rules.
+
+  .. c7n-schema:: SqlServerFirewallFilter
+       :module: c7n_azure.resources.sqlserver
 
 Actions
 -------
@@ -71,3 +76,17 @@ This policy will find all SQL servers with average DTU consumption under 10 perc
             transport:
               - type: asq
                 queue: https://accountname.queue.core.windows.net/queuename
+
+This policy will find all SQL servers without any firewall rules defined.
+
+.. code-block:: yaml
+
+    policies:
+      - name: find-sqlserver-without-firewall-rules
+        resource: azure.sqlserver
+      filters:
+      - type: firewall
+        key: firewall_rules
+        value_type: size
+        op: eq
+        value: 0

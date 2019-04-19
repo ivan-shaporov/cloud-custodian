@@ -36,7 +36,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Thu, 18 Apr 2019 22:52:06 GMT
+      - Thu, 18 Apr 2019 23:15:41 GMT
       Expires:
       - '-1'
       Pragma:
@@ -48,16 +48,16 @@ interactions:
       X-Content-Type-Options:
       - nosniff
       x-ms-correlation-request-id:
-      - 3b2fd87f-273b-4421-b5cc-cb6298f48626
+      - 82153f95-0c95-45c7-9ae9-6a383282fe3a
       x-ms-original-request-ids:
-      - ac646a15-6ec8-4a81-9807-0cdd3d128112
-      - dbaa61dc-134c-4e2a-a57b-e3ae74bc1084
+      - f5f66bf3-7262-4692-82c7-4de5a28ba49b
+      - 96d3dd6e-5c43-40a1-aa50-7d0fdbe5fbd8
       x-ms-ratelimit-remaining-subscription-reads:
-      - '11989'
+      - '11999'
       x-ms-request-id:
-      - 3b2fd87f-273b-4421-b5cc-cb6298f48626
+      - 82153f95-0c95-45c7-9ae9-6a383282fe3a
       x-ms-routing-request-id:
-      - WESTUS2:20190418T225206Z:3b2fd87f-273b-4421-b5cc-cb6298f48626
+      - WESTUS2:20190418T231542Z:82153f95-0c95-45c7-9ae9-6a383282fe3a
     status:
       code: 200
       message: OK
@@ -71,54 +71,51 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.8 (Windows-10-10.0.17763-SP0) msrest/0.6.6 msrest_azure/0.6.0 azure-mgmt-monitor/0.6.0
+      - python/3.6.8 (Windows-10-10.0.17763-SP0) msrest/0.6.6 msrest_azure/0.6.0 azure-mgmt-sql/0.12.0
         Azure-SDK-For-Python
       accept-language:
       - en-US
     method: GET
-    uri: https://management.azure.com/subscriptions/ea42f556-5106-4743-99b0-c129bfa71a47/resourceGroups/test_sqlserver/providers/Microsoft.Sql/servers/cctestsqlserverideeowhs5iudo/providers/microsoft.insights/metrics?timespan=2019-04-15%2015%3A30%3A00%2F2019-04-18%2015%3A30%3A00&interval=P1D&metricnames=dtu_consumption_percent&aggregation=average&$filter=ElasticPoolResourceId%20eq%20%27%2A%27&api-version=2018-01-01
+    uri: https://management.azure.com/subscriptions/ea42f556-5106-4743-99b0-c129bfa71a47/resourceGroups/test_sqlserver/providers/Microsoft.Sql/servers/cctestsqlserverideeowhs5iudo/firewallRules?api-version=2014-04-01
   response:
     body:
       string: !!binary |
         H4sIAAAAAAAEAO29B2AcSZYlJi9tynt/SvVK1+B0oQiAYBMk2JBAEOzBiM3mkuwdaUcjKasqgcpl
-        VmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/In7xR9Oq
-        aT96tDP6qC0WebPKlh89+mhvZ/fh9s7+9u79N7v3H93bebSz81N37YcH7sOPRh8VyzavL7OSXnu5
-        +5Q+oN/X+UePvveLPypm9OHdZj1ppnWxaotq2dzdyz6d7O/MHm7vfjqdbO9/+uDT7YNPdx5uz+5n
-        u7Pz3d2dg517d+u8qdb1NP+8rtar5m6bN+3v3/yisqGO8vruqq4ui1leN3e/KKZ11VTn7fj1Lyrv
-        ytfN3ekUL9j21DSvrubN/WI9q6Ivny2b4mLeNncXeVsX0+burF3//lPCdr1grH//VU7ILFsaXHu9
-        orF9NPwutVlmC2rziw0hPhqGVlbTrCx+kM9+Ups+ffNVql9nF/lHv2T00XpZ0PR89FI+pHd4mmhU
-        eUM0/v4v+b70RxM3BQCHmEcRestQtM4vCAVqmGdNu272Pvol/w+vZIcTAgIAAA==
+        VmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/In7xR5dZ
+        uc4/evS9X/xRMfvo0Ud3m/WkmdbFqi2qZXN3L/t0sr8ze7i9++l0sr3/6YNPtw8+3Xm4Pbuf7c7O
+        d3d3Dnbu3a3zplrX0/zzulqvmrtt3rS/f/OLyiavL/P67qquLotZXjd3vyimddVU5+349S8q78rX
+        zd3pFC/Y9tQ0r67mzf1iPavunhd1fpWV5at1mTd3j8uyuqJ/vlssZ9VVc/yDdZ2frZqPRh8tswUN
+        4iP6bqBBe71CgzgKQS/UuKymGcZPL5xmTZt+9Trdo4/fElT66HJ3b7xDf9LAVnndFvTKo1/8UdNm
+        dXu2Op7NiBz0yUc7Y/6PGubLWeyLX/JLvv9L/h9/YHUdgAEAAA==
     headers:
       Cache-Control:
-      - no-cache
+      - no-store, no-cache
       Content-Encoding:
       - gzip
       Content-Type:
-      - application/json
+      - application/json; odata=minimalmetadata; streaming=true; charset=utf-8
+      DataServiceVersion:
+      - 3.0;
       Date:
-      - Thu, 18 Apr 2019 22:52:06 GMT
+      - Thu, 18 Apr 2019 23:15:42 GMT
       Server:
-      - Microsoft-IIS/10.0
+      - Microsoft-HTTPAPI/2.0
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains
       Transfer-Encoding:
       - chunked
       Vary:
-      - Accept-Encoding,Accept-Encoding
-      X-AspNet-Version:
-      - 4.0.30319
+      - Accept-Encoding
       X-Content-Type-Options:
       - nosniff
-      X-Powered-By:
-      - ASP.NET
       x-ms-correlation-request-id:
-      - 073bccba-7a07-4d56-a480-3427ebb2ba4f
+      - dd478ac8-e781-4aa0-aafe-a225332fc917
       x-ms-ratelimit-remaining-subscription-reads:
-      - '11988'
+      - '11996'
       x-ms-request-id:
-      - '{073bccba-7a07-4d56-a480-3427ebb2ba4f}'
+      - 80ce95e9-c947-47d7-a6fd-3046e858f905
       x-ms-routing-request-id:
-      - WESTUS2:20190418T225207Z:073bccba-7a07-4d56-a480-3427ebb2ba4f
+      - WESTUS2:20190418T231542Z:dd478ac8-e781-4aa0-aafe-a225332fc917
     status:
       code: 200
       message: OK

@@ -21,7 +21,7 @@ from mock import patch
 
 class SqlServerTest(BaseTest):
 
-    TEST_DATE = datetime.datetime(2018, 12, 26, 14, 10, 00)
+    TEST_DATE = datetime.datetime(2019, 4, 18, 15, 30, 00)
 
     def test_sql_server_schema_validate(self):
         with self.sign_out_patch():
@@ -39,9 +39,9 @@ class SqlServerTest(BaseTest):
             'filters': [
                 {'type': 'value',
                  'key': 'name',
-                 'op': 'eq',
+                 'op': 'glob',
                  'value_type': 'normalize',
-                 'value': 'cctestsqlserver12262018'}],
+                 'value': 'cctestsqlserver*'}],
         })
         resources = p.run()
         self.assertEqual(len(resources), 1)
@@ -70,6 +70,11 @@ class SqlServerTest(BaseTest):
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
             'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
                 {'type': 'metric',
                  'metric': 'dtu_consumption_percent',
                  'op': 'lt',
@@ -89,6 +94,11 @@ class SqlServerTest(BaseTest):
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
             'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
                 {'type': 'metric',
                  'metric': 'dtu_consumption_percent',
                  'op': 'lt',
@@ -100,3 +110,39 @@ class SqlServerTest(BaseTest):
         })
         resources = p.run()
         self.assertEqual(len(resources), 1)
+
+    def test_find_by_firewall_rule(self):
+        p = self.load_policy({
+            'name': 'test-azure-sql-server',
+            'resource': 'azure.sqlserver',
+            'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
+                {'type': 'firewall',
+                 'key': 'firewall_rules[].start_ip_address',
+                 'op': 'contains',
+                 'value': '0.0.0.0'}],
+        })
+        resources = p.run()
+        self.assertEqual(len(resources), 1)
+
+    def test_not_found_by_firewall_rule(self):
+        p = self.load_policy({
+            'name': 'test-azure-sql-server',
+            'resource': 'azure.sqlserver',
+            'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
+                {'type': 'firewall',
+                 'key': 'firewall_rules[].start_ip_address',
+                 'op': 'contains',
+                 'value': '1.1.1.1'}],
+        })
+        resources = p.run()
+        self.assertEqual(len(resources), 0)
