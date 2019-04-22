@@ -127,7 +127,7 @@ class SqlServerTest(BaseTest):
                  'value_type': 'normalize',
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall',
-                 'key': 'firewall_rules[].start_ip_address',
+                 'key': '"c7n:firewall_rules"[].start_ip_address',
                  'op': 'contains',
                  'value': '0.0.0.0'}],
         })
@@ -145,7 +145,7 @@ class SqlServerTest(BaseTest):
                  'value_type': 'normalize',
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall',
-                 'key': 'firewall_rules[].start_ip_address',
+                 'key': '"c7n:firewall_rules"[].start_ip_address',
                  'op': 'contains',
                  'value': '1.1.1.1'}],
         })

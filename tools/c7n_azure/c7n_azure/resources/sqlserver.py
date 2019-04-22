@@ -12,10 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from c7n_azure import constants
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
+from c7n_azure.utils import ThreadHelper
 from c7n.filters import ValueFilter
 from c7n.filters.core import type_schema
+import logging
+
+log = logging.getLogger('azure.networkinterface')
 
 
 @resources.register('sqlserver')
@@ -40,7 +45,7 @@ class SqlServerFirewallFilter(ValueFilter):
                 resource: azure.sqlserver
                 filters:
                   - type: firewall
-                    key: firewall_rules
+                    key: c7n:firewall_rules
                     value_type: size
                     op: eq
                     value: 0
@@ -49,24 +54,37 @@ class SqlServerFirewallFilter(ValueFilter):
     schema = type_schema('firewall', rinherit=ValueFilter.schema)
 
     def process(self, resources, event=None):
-        client = self.manager.get_client()
+        self.client = self.manager.get_client()
 
-        def _query_firewall_rules(resource):
-            query = client.firewall_rules.list_by_server(
-                resource['resourceGroup'],
-                resource['name'])
-
-            rules = [
-                {
-                    'name': r.name,
-                    'start_ip_address': r.start_ip_address,
-                    'end_ip_address': r.end_ip_address
-                }
-                for r in query]
-
-            resource['firewall_rules'] = rules
-
-        with self.executor_factory(max_workers=2) as w:
-            list(w.map(_query_firewall_rules, resources))
+        resources, _ = ThreadHelper.execute_in_parallel(
+            resources=resources,
+            event=event,
+            execution_method=self._query_firewall_rules,
+            executor_factory=self.executor_factory,
+            log=log,
+            max_workers=constants.DEFAULT_MAX_THREAD_WORKERS,
+            chunk_size=constants.DEFAULT_CHUNK_SIZE
+        )
 
         return super(SqlServerFirewallFilter, self).process(resources, event)
+
+    def _query_firewall_rules(self, resources, event):
+        for resource in resources:
+            try:
+                query = self.client.firewall_rules.list_by_server(
+                    resource['resourceGroup'],
+                    resource['name'])
+
+                rules = [
+                    {
+                        'name': r.name,
+                        'start_ip_address': r.start_ip_address,
+                        'end_ip_address': r.end_ip_address
+                    }
+                    for r in query]
+
+                resource['c7n:firewall_rules'] = rules
+            except Exception as error:
+                log.warning(error)
+
+        return resources

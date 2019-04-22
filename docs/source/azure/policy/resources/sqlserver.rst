@@ -86,7 +86,7 @@ This policy will find all SQL servers without any firewall rules defined.
         resource: azure.sqlserver
       filters:
       - type: firewall
-        key: firewall_rules
+        key: c7n:firewall_rules
         value_type: size
         op: eq
         value: 0
