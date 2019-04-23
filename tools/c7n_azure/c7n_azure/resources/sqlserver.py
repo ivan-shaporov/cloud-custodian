@@ -88,4 +88,3 @@ class SqlServerFirewallFilter(ValueFilter):
                 log.warning(error)
 
         return resources
-    
