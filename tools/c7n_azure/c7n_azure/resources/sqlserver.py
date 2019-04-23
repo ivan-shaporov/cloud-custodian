@@ -20,7 +20,7 @@ from c7n.filters import ValueFilter
 from c7n.filters.core import type_schema
 import logging
 
-log = logging.getLogger('azure.networkinterface')
+log = logging.getLogger('azure.sqlserver')
 
 
 @resources.register('sqlserver')
