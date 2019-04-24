@@ -16,22 +16,25 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from azure_common import BaseTest, arm_template
 from c7n_azure.session import Session
 from c7n.utils import local_session
-from azure.mgmt.storage.models import StorageAccountUpdateParameters, DefaultAction
+from azure.mgmt.storage.models import StorageAccountUpdateParameters, Action, DefaultAction
 
 rg_name = 'test_storage'
 
 
 class StorageTestFirewall(BaseTest):
+    def setUp(self):
+        super(StorageTestFirewall, self).setUp()
+        self.client = local_session(Session).client('azure.mgmt.storage.StorageManagementClient')
+
     def tearDown(self):
-        client = local_session(Session).client('azure.mgmt.storage.StorageManagementClient')
-        resources = list(client.storage_accounts.list_by_resource_group(rg_name))
+        resources = self._get_resources()
         self.assertEqual(len(resources), 1)
         resource = resources[0]
         resource.network_rule_set.ip_rules = []
         resource.network_rule_set.virtual_network_rules = []
         resource.network_rule_set.bypass = 'AzureServices'
         resource.network_rule_set.default_action = DefaultAction.allow
-        client.storage_accounts.update(
+        self.client.storage_accounts.update(
             rg_name,
             resource.name,
             StorageAccountUpdateParameters(network_rule_set=resource.network_rule_set))
@@ -62,30 +65,23 @@ class StorageTestFirewall(BaseTest):
 
         resources = self._get_resources()
         self.assertEqual(len(resources), 1)
-        ip_rules = resources[0]['properties']['networkAcls']['ipRules']
+        ip_rules = resources[0].network_rule_set.ip_rules
         self.assertEqual(len(ip_rules), 2)
-        self.assertEqual(ip_rules[0]['value'], '11.12.13.14')
-        self.assertEqual(ip_rules[1]['value'], '21.22.23.24')
-        self.assertEqual(ip_rules[0]['action'], 'Allow')
-        self.assertEqual(ip_rules[1]['action'], 'Allow')
+        self.assertEqual(ip_rules[0].ip_address_or_range, '11.12.13.14')
+        self.assertEqual(ip_rules[1].ip_address_or_range, '21.22.23.24')
+        self.assertEqual(ip_rules[0].action, Action.allow)
+        self.assertEqual(ip_rules[1].action, Action.allow)
 
     @arm_template('storage.json')
     def test_virtual_network_rules_action(self):
-        p_vnet_get = self.load_policy({
-            'name': 'test-azure-storage-enum',
-            'resource': 'azure.vnet',
-            'filters': [
-                {'type': 'value',
-                 'key': 'name',
-                 'op': 'glob',
-                 'value_type': 'normalize',
-                 'value': 'cctstoragevnet*'}],
-        })
+        subscription_id = local_session(Session).subscription_id
 
-        vnets = p_vnet_get.run()
-
-        id1 = vnets[0]['properties']['subnets'][0]['id']
-        id2 = vnets[1]['properties']['subnets'][0]['id']
+        id1 = '/subscriptions/' + subscription_id + \
+              '/resourceGroups/test_storage/providers/Microsoft.Network/virtualNetworks/' \
+              'cctstoragevnet1/subnets/testsubnet1'
+        id2 = '/subscriptions/' + subscription_id + \
+              '/resourceGroups/test_storage/providers/Microsoft.Network/virtualNetworks/'\
+              'cctstoragevnet2/subnets/testsubnet2'
 
         p_add = self.load_policy({
             'name': 'test-azure-storage-add-ips',
@@ -111,12 +107,12 @@ class StorageTestFirewall(BaseTest):
 
         resources = self._get_resources()
         self.assertEqual(len(resources), 1)
-        rules = resources[0]['properties']['networkAcls']['virtualNetworkRules']
+        rules = resources[0].network_rule_set.virtual_network_rules
         self.assertEqual(len(rules), 2)
-        self.assertEqual(rules[0]['id'], id1)
-        self.assertEqual(rules[1]['id'], id2)
-        self.assertEqual(rules[0]['action'], 'Allow')
-        self.assertEqual(rules[1]['action'], 'Allow')
+        self.assertEqual(rules[0].virtual_network_resource_id, id1)
+        self.assertEqual(rules[1].virtual_network_resource_id, id2)
+        self.assertEqual(rules[0].action, Action.allow)
+        self.assertEqual(rules[1].action, Action.allow)
 
     @arm_template('storage.json')
     def test_empty_bypass_network_rules_action(self):
@@ -139,7 +135,7 @@ class StorageTestFirewall(BaseTest):
         p_add.run()
 
         resources = self._get_resources()
-        bypass = resources[0]['properties']['networkAcls']['bypass']
+        bypass = resources[0].network_rule_set.bypass
         self.assertEqual(bypass, 'None')
 
     @arm_template('storage.json')
@@ -162,7 +158,7 @@ class StorageTestFirewall(BaseTest):
         p_add.run()
 
         resources = self._get_resources()
-        bypass = resources[0]['properties']['networkAcls']['bypass']
+        bypass = resources[0].network_rule_set.bypass
         self.assertEqual(bypass, 'None')
 
     @arm_template('storage.json')
@@ -185,8 +181,8 @@ class StorageTestFirewall(BaseTest):
         p_add.run()
 
         resources = self._get_resources()
-        action = resources[0]['properties']['networkAcls']['defaultAction']
-        self.assertEqual(action, 'Deny')
+        action = resources[0].network_rule_set.default_action
+        self.assertEqual(action, DefaultAction.deny)
 
     @arm_template('storage.json')
     def test_bypass_network_rules_action(self):
@@ -209,21 +205,9 @@ class StorageTestFirewall(BaseTest):
         p_add.run()
 
         resources = self._get_resources()
-        bypass = resources[0]['properties']['networkAcls']['bypass']
+        bypass = resources[0].network_rule_set.bypass
         self.assertEqual(bypass, 'Metrics')
 
     def _get_resources(self):
-        p_get = self.load_policy({
-            'name': 'test-azure-storage-enum',
-            'resource': 'azure.storage',
-            'filters': [
-                {'type': 'value',
-                 'key': 'name',
-                 'op': 'glob',
-                 'value_type': 'normalize',
-                 'value': 'cctstorage*'}],
-        })
-
-        resources = p_get.run()
-
+        resources = list(self.client.storage_accounts.list_by_resource_group(rg_name))
         return resources
