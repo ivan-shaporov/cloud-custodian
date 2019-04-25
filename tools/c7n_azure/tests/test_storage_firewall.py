@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import re
+
 from azure_common import BaseTest, arm_template
 from c7n_azure.session import Session
 from c7n.utils import local_session
@@ -74,7 +76,7 @@ class StorageTestFirewall(BaseTest):
 
     @arm_template('storage.json')
     def test_virtual_network_rules_action(self):
-        subscription_id = local_session(Session).subscription_id
+        subscription_id = local_session(Session).get_subscription_id()
 
         id1 = '/subscriptions/' + subscription_id + \
               '/resourceGroups/test_storage/providers/Microsoft.Network/virtualNetworks/' \
@@ -109,8 +111,8 @@ class StorageTestFirewall(BaseTest):
         self.assertEqual(len(resources), 1)
         rules = resources[0].network_rule_set.virtual_network_rules
         self.assertEqual(len(rules), 2)
-        self.assertEqual(rules[0].virtual_network_resource_id, id1)
-        self.assertEqual(rules[1].virtual_network_resource_id, id2)
+        self._assert_equal_resource_ids(rules[0].virtual_network_resource_id, id1)
+        self._assert_equal_resource_ids(rules[1].virtual_network_resource_id, id2)
         self.assertEqual(rules[0].action, Action.allow)
         self.assertEqual(rules[1].action, Action.allow)
 
@@ -211,3 +213,7 @@ class StorageTestFirewall(BaseTest):
     def _get_resources(self):
         resources = list(self.client.storage_accounts.list_by_resource_group(rg_name))
         return resources
+
+    def _assert_equal_resource_ids(self, id1, id2):
+        sub_id_regexp = r"/subscriptions/[\da-zA-Z]{8}-([\da-zA-Z]{4}-){3}[\da-zA-Z]{12}"
+        self.assertEqual(re.sub(sub_id_regexp, '', id1), re.sub(sub_id_regexp, '', id2))
