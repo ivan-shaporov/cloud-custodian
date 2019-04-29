@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from netaddr import IPRange
+
 from c7n_azure import constants
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.utils import ThreadHelper
-from c7n.filters import ValueFilter
+from c7n.filters import Filter, FilterValidationError
 from c7n.filters.core import type_schema
+from c7n_azure.utils import IpRangeHelper
 import logging
 
-log = logging.getLogger('azure.sqlserver')
+log = logging.getLogger('custodian.azure.sqlserver')
 
 
 @resources.register('sqlserver')
@@ -32,8 +35,8 @@ class SqlServer(ArmResourceManager):
         enum_spec = ('servers', 'list', None)
 
 
-@SqlServer.filter_registry.register('firewall')
-class SqlServerFirewallFilter(ValueFilter):
+@SqlServer.filter_registry.register('firewall-rules')
+class SqlServerFirewallRulesFilter(Filter):
     """Filters SQL servers by the firewall rules
 
     :example:
@@ -41,50 +44,78 @@ class SqlServerFirewallFilter(ValueFilter):
     .. code-block:: yaml
 
             policies:
-              - name: servers-without-firewall
+              - name: servers-with-firewall
                 resource: azure.sqlserver
                 filters:
-                  - type: firewall
-                    key: c7n:firewall_rules
-                    value_type: size
-                    op: eq
-                    value: 0
+                  - type: firewall-rules
+                    include:
+                    - '131.107.160.2-131.107.160.3'
+                    - 10.20.20.0/24
     """
 
-    schema = type_schema('firewall', rinherit=ValueFilter.schema)
+    schema = type_schema(
+        'firewall-rules',
+        **{
+            'include': {'type': 'array', 'items': {'type': 'string'}},
+            'equal': {'type': 'array', 'items': {'type': 'string'}}
+        })
 
-    def process(self, resources, event=None):
+    def __init__(self, data, manager=None):
+        super(SqlServerFirewallRulesFilter, self).__init__(data, manager)
+        self.policy_include = None
+        self.policy_equal = None
         self.client = self.manager.get_client()
 
-        resources, _ = ThreadHelper.execute_in_parallel(
+    def validate(self):
+        self.policy_include = IpRangeHelper.parse_ip_ranges(self.data, 'include')
+        self.policy_equal = IpRangeHelper.parse_ip_ranges(self.data, 'equal')
+
+        has_include = self.policy_include is not None
+        has_equal = self.policy_equal is not None
+
+        if has_include and has_equal:
+            raise FilterValidationError('Cannot have both include and equal.')
+
+        if not has_include and not has_equal:
+            raise FilterValidationError('Must have either include or equal.')
+
+        return True
+
+    def process(self, resources, event=None):
+        result, _ = ThreadHelper.execute_in_parallel(
             resources=resources,
             event=event,
-            execution_method=self._query_firewall_rules,
+            execution_method=self._check_resources,
             executor_factory=self.executor_factory,
             log=log,
             max_workers=constants.DEFAULT_MAX_THREAD_WORKERS,
             chunk_size=constants.DEFAULT_CHUNK_SIZE
         )
 
-        return super(SqlServerFirewallFilter, self).process(resources, event)
+        return result
 
-    def _query_firewall_rules(self, resources, event):
-        for resource in resources:
-            try:
-                query = self.client.firewall_rules.list_by_server(
-                    resource['resourceGroup'],
-                    resource['name'])
+    def _check_resources(self, resources, event):
+        return [r for r in resources if self._check_resource(r)]
 
-                rules = [
-                    {
-                        'name': r.name,
-                        'start_ip_address': r.start_ip_address,
-                        'end_ip_address': r.end_ip_address
-                    }
-                    for r in query]
+    def _check_resource(self, resource):
+        try:
+            query = self.client.firewall_rules.list_by_server(
+                resource['resourceGroup'],
+                resource['name'])
 
-                resource['c7n:firewall_rules'] = rules
-            except Exception as error:
-                log.warning(error)
+            resource_rules = set([IPRange(r.start_ip_address, r.end_ip_address) for r in query])
+        except Exception as error:
+            log.warning(error)
+            return False
 
-        return resources
+        ok = self._check_rules(resource_rules)
+
+        return ok
+
+    def _check_rules(self, resource_rules):
+        if self.policy_equal is not None:
+            return self.policy_equal == resource_rules
+        elif self.policy_include is not None:
+            return self.policy_include.issubset(resource_rules)
+        else:  # validated earlier, can never happen
+            raise FilterValidationError("Internal error.")

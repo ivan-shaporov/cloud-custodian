@@ -43,13 +43,25 @@
       {
         "type": "Microsoft.Sql/servers/firewallRules",
         "apiVersion": "2015-05-01-preview",
-        "name": "[concat('cctestsqlserver', uniqueString(resourceGroup().id), '/AllowAllWindowsAzureIps')]",
+        "name": "[concat(parameters('servers_cctestsqlserver_name'), '/AllowAllWindowsAzureIps')]",
         "dependsOn": [
-          "[resourceId('Microsoft.Sql/servers', concat('cctestsqlserver', uniqueString(resourceGroup().id)))]"
+          "[resourceId('Microsoft.Sql/servers', parameters('servers_cctestsqlserver_name'))]"
         ],
         "properties": {
           "startIpAddress": "0.0.0.0",
           "endIpAddress": "0.0.0.0"
+        }
+      },
+      {
+        "type": "Microsoft.Sql/servers/firewallRules",
+        "apiVersion": "2015-05-01-preview",
+        "name": "[concat(parameters('servers_cctestsqlserver_name'), '/1.2.2.128s25')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Sql/servers', parameters('servers_cctestsqlserver_name'))]"
+        ],
+        "properties": {
+          "startIpAddress": "1.2.2.128",
+          "endIpAddress": "1.2.2.255"
         }
       }
    ],

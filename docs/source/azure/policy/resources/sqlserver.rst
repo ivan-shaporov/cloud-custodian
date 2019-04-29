@@ -11,10 +11,10 @@ Filters
     - Metric Filter - Filter on metrics from Azure Monitor - (see `SQL Server Supported Metrics <https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-supported-metrics#microsoftsqlservers/>`_)
     - Tag Filter - Filter on tag presence and/or values
     - Marked-For-Op Filter - Filter on tag that indicates a scheduled operation for a resource
-- ``firewall``
+- ``firewall-rules``
   Filter based on firewall rules.
 
-  .. c7n-schema:: SqlServerFirewallFilter
+  .. c7n-schema:: SqlServerFirewallRulesFilter
        :module: c7n_azure.resources.sqlserver
 
 Actions
@@ -85,8 +85,16 @@ This policy will find all SQL servers without any firewall rules defined.
       - name: find-sqlserver-without-firewall-rules
         resource: azure.sqlserver
       filters:
-      - type: firewall
-        key: c7n:firewall_rules
-        value_type: size
-        op: eq
-        value: 0
+      - type: firewall-rules
+        equal: []
+
+This policy will find all SQL servers allowing traffic from 1.2.2.128/25 CIDR.
+
+.. code-block:: yaml
+
+    policies:
+      - name: find-sqlserver-without-firewall-rules
+        resource: azure.sqlserver
+      filters:
+      - type: firewall-rules
+        include: ['1.2.2.128/25']

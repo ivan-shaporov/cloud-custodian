@@ -116,7 +116,7 @@ class SqlServerTest(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 1)
 
-    def test_find_by_firewall_rule(self):
+    def test_firewall_rules_include_range(self):
         p = self.load_policy({
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
@@ -126,15 +126,13 @@ class SqlServerTest(BaseTest):
                  'op': 'glob',
                  'value_type': 'normalize',
                  'value': 'cctestsqlserver*'},
-                {'type': 'firewall',
-                 'key': '"c7n:firewall_rules"[].start_ip_address',
-                 'op': 'contains',
-                 'value': '0.0.0.0'}],
+                {'type': 'firewall-rules',
+                 'include': ['0.0.0.0-0.0.0.0']}],
         })
         resources = p.run()
-        self.assertEqual(len(resources), 1)
+        self.assertEqual(1, len(resources))
 
-    def test_not_found_by_firewall_rule(self):
+    def test_firewall_rules_not_include_all_ranges(self):
         p = self.load_policy({
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
@@ -144,10 +142,107 @@ class SqlServerTest(BaseTest):
                  'op': 'glob',
                  'value_type': 'normalize',
                  'value': 'cctestsqlserver*'},
-                {'type': 'firewall',
-                 'key': '"c7n:firewall_rules"[].start_ip_address',
-                 'op': 'contains',
-                 'value': '1.1.1.1'}],
+                {'type': 'firewall-rules',
+                 'include': ['0.0.0.0-0.0.0.0', '0.0.0.0-0.0.0.1']}],
         })
         resources = p.run()
-        self.assertEqual(len(resources), 0)
+        self.assertEqual(0, len(resources))
+
+    def test_firewall_rules_include_cidr(self):
+        p = self.load_policy({
+            'name': 'test-azure-sql-server',
+            'resource': 'azure.sqlserver',
+            'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
+                {'type': 'firewall-rules',
+                 'include': ['1.2.2.128/25']}],
+        })
+        resources = p.run()
+        self.assertEqual(1, len(resources))
+
+    def test_firewall_rules_not_include_cidr(self):
+        p = self.load_policy({
+            'name': 'test-azure-sql-server',
+            'resource': 'azure.sqlserver',
+            'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
+                {'type': 'firewall-rules',
+                 'include': ['2.2.2.128/25']}],
+        })
+        resources = p.run()
+        self.assertEqual(0, len(resources))
+
+    def test_firewall_rules_equal(self):
+        p = self.load_policy({
+            'name': 'test-azure-sql-server',
+            'resource': 'azure.sqlserver',
+            'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
+                {'type': 'firewall-rules',
+                 'equal': ['0.0.0.0-0.0.0.0', '1.2.2.128/25']}],
+        })
+        resources = p.run()
+        self.assertEqual(1, len(resources))
+
+    def test_firewall_rules_not_equal(self):
+        p = self.load_policy({
+            'name': 'test-azure-sql-server',
+            'resource': 'azure.sqlserver',
+            'filters': [
+                {'type': 'value',
+                 'key': 'name',
+                 'op': 'glob',
+                 'value_type': 'normalize',
+                 'value': 'cctestsqlserver*'},
+                {'type': 'firewall-rules',
+                 'equal': ['0.0.0.0-0.0.0.1', '0.0.0.0-0.0.0.0', '1.2.2.128/25']}],
+        })
+        resources = p.run()
+        self.assertEqual(0, len(resources))
+
+    def test_firewall_no_rules(self):
+        with self.assertRaises(Exception) as context:
+            self.load_policy({
+                'name': 'test-azure-sql-server',
+                'resource': 'azure.sqlserver',
+                'filters': [{'type': 'firewall-rules'}],
+            })
+
+        self.assertTrue('Must have either include or equal.' in str(context.exception))
+
+    def test_firewall_both_rules(self):
+        with self.assertRaises(Exception) as context:
+            self.load_policy({
+                'name': 'test-azure-sql-server',
+                'resource': 'azure.sqlserver',
+                'filters': [
+                    {'type': 'firewall-rules',
+                     'equal': [],
+                     'include': []}],
+            })
+
+        self.assertTrue('Cannot have both include and equal.' in str(context.exception))
+
+    def test_firewall_invalid_range(self):
+        with self.assertRaises(Exception) as context:
+            self.load_policy({
+                'name': 'test-azure-sql-server',
+                'resource': 'azure.sqlserver',
+                'filters': [
+                    {'type': 'firewall-rules',
+                     'include': ['0.0.0.1-0.0.0.0']}],
+            })
+
+        self.assertTrue('lower bound IP greater than upper bound!' in str(context.exception))
