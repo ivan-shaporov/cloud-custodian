@@ -14,7 +14,6 @@
 
 from netaddr import IPRange
 
-from c7n_azure import constants
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.utils import ThreadHelper
