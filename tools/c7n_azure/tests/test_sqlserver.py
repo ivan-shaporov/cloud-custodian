@@ -128,7 +128,7 @@ class SqlServerTest(BaseTest):
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall-rules',
                  'include': ['0.0.0.0-0.0.0.0']}],
-        })
+        }, validate=True)
         resources = p.run()
         self.assertEqual(1, len(resources))
 
@@ -144,7 +144,7 @@ class SqlServerTest(BaseTest):
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall-rules',
                  'include': ['0.0.0.0-0.0.0.0', '0.0.0.0-0.0.0.1']}],
-        })
+        }, validate=True)
         resources = p.run()
         self.assertEqual(0, len(resources))
 
@@ -160,7 +160,7 @@ class SqlServerTest(BaseTest):
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall-rules',
                  'include': ['1.2.2.128/25']}],
-        })
+        }, validate=True)
         resources = p.run()
         self.assertEqual(1, len(resources))
 
@@ -176,7 +176,7 @@ class SqlServerTest(BaseTest):
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall-rules',
                  'include': ['2.2.2.128/25']}],
-        })
+        }, validate=True)
         resources = p.run()
         self.assertEqual(0, len(resources))
 
@@ -192,7 +192,7 @@ class SqlServerTest(BaseTest):
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall-rules',
                  'equal': ['0.0.0.0-0.0.0.0', '1.2.2.128/25']}],
-        })
+        }, validate=True)
         resources = p.run()
         self.assertEqual(1, len(resources))
 
@@ -208,7 +208,7 @@ class SqlServerTest(BaseTest):
                  'value': 'cctestsqlserver*'},
                 {'type': 'firewall-rules',
                  'equal': ['0.0.0.0-0.0.0.1', '0.0.0.0-0.0.0.0', '1.2.2.128/25']}],
-        })
+        }, validate=True)
         resources = p.run()
         self.assertEqual(0, len(resources))
 
@@ -218,9 +218,9 @@ class SqlServerTest(BaseTest):
                 'name': 'test-azure-sql-server',
                 'resource': 'azure.sqlserver',
                 'filters': [{'type': 'firewall-rules'}],
-            })
+            }, validate=True)
 
-        self.assertTrue('Must have either include or equal.' in str(context.exception))
+        self.assertEqual('Must have either include or equal.', str(context.exception))
 
     def test_firewall_both_rules(self):
         with self.assertRaises(Exception) as context:
@@ -231,9 +231,9 @@ class SqlServerTest(BaseTest):
                     {'type': 'firewall-rules',
                      'equal': [],
                      'include': []}],
-            })
+            }, validate=True)
 
-        self.assertTrue('Cannot have both include and equal.' in str(context.exception))
+        self.assertEqual('Cannot have both include and equal.', str(context.exception))
 
     def test_firewall_invalid_range(self):
         with self.assertRaises(Exception) as context:
@@ -245,4 +245,4 @@ class SqlServerTest(BaseTest):
                      'include': ['0.0.0.1-0.0.0.0']}],
             })
 
-        self.assertTrue('lower bound IP greater than upper bound!' in str(context.exception))
+        self.assertEqual('lower bound IP greater than upper bound!', str(context.exception))

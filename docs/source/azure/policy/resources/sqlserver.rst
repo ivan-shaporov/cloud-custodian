@@ -11,8 +11,9 @@ Filters
     - Metric Filter - Filter on metrics from Azure Monitor - (see `SQL Server Supported Metrics <https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-supported-metrics#microsoftsqlservers/>`_)
     - Tag Filter - Filter on tag presence and/or values
     - Marked-For-Op Filter - Filter on tag that indicates a scheduled operation for a resource
-- ``firewall-rules``
-  Filter based on firewall rules.
+- ``firewall-rules`` Filter based on firewall rules.
+  - `include`: the list of IP ranges or CIDR that firewall rules must include.
+  - `equal`: the list of IP ranges or CIDR that firewall rules must match exactly.
 
   .. c7n-schema:: SqlServerFirewallRulesFilter
        :module: c7n_azure.resources.sqlserver

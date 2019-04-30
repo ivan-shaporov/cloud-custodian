@@ -384,18 +384,18 @@ class PortsRangeHelper(object):
 class IpRangeHelper(object):
 
     @staticmethod
-    def parse_ip_ranges(dict, key):
+    def parse_ip_ranges(data, key):
         '''
         Parses IP range or CIDR mask.
-        :param dict: Dictionary where to look for the value.
+        :param data: Dictionary where to look for the value.
         :param key:  Key for the value to be parsed.
         :return: Set of IP ranges and networks.
         '''
 
-        if key not in dict:
+        if key not in data:
             return None
 
-        ranges = [[s.strip() for s in r.split('-')] for r in dict[key]]
+        ranges = [[s.strip() for s in r.split('-')] for r in data[key]]
         result = set()
         for r in ranges:
             if len(r) > 2:

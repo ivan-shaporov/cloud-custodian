@@ -44,13 +44,13 @@ class SqlServerFirewallRulesFilter(Filter):
     .. code-block:: yaml
 
             policies:
-              - name: servers-with-firewall
-                resource: azure.sqlserver
-                filters:
-                  - type: firewall-rules
-                    include:
-                    - '131.107.160.2-131.107.160.3'
-                    - 10.20.20.0/24
+                - name: servers-with-firewall
+                    resource: azure.sqlserver
+                    filters:
+                        - type: firewall-rules
+                            include:
+                            - '131.107.160.2-131.107.160.3'
+                            - 10.20.20.0/24
     """
 
     schema = type_schema(
@@ -64,7 +64,7 @@ class SqlServerFirewallRulesFilter(Filter):
         super(SqlServerFirewallRulesFilter, self).__init__(data, manager)
         self.policy_include = None
         self.policy_equal = None
-        self.client = self.manager.get_client()
+        self.client = None
 
     def validate(self):
         self.policy_include = IpRangeHelper.parse_ip_ranges(self.data, 'include')
@@ -82,14 +82,14 @@ class SqlServerFirewallRulesFilter(Filter):
         return True
 
     def process(self, resources, event=None):
+        self.client = self.manager.get_client()
+
         result, _ = ThreadHelper.execute_in_parallel(
             resources=resources,
             event=event,
             execution_method=self._check_resources,
             executor_factory=self.executor_factory,
-            log=log,
-            max_workers=constants.DEFAULT_MAX_THREAD_WORKERS,
-            chunk_size=constants.DEFAULT_CHUNK_SIZE
+            log=log
         )
 
         return result
