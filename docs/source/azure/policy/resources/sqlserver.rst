@@ -85,9 +85,9 @@ This policy will find all SQL servers without any firewall rules defined.
     policies:
       - name: find-sqlserver-without-firewall-rules
         resource: azure.sqlserver
-      filters:
-      - type: firewall-rules
-        equal: []
+        filters:
+        - type: firewall-rules
+          equal: []
 
 This policy will find all SQL servers allowing traffic from 1.2.2.128/25 CIDR.
 
@@ -96,6 +96,6 @@ This policy will find all SQL servers allowing traffic from 1.2.2.128/25 CIDR.
     policies:
       - name: find-sqlserver-without-firewall-rules
         resource: azure.sqlserver
-      filters:
-      - type: firewall-rules
-        include: ['1.2.2.128/25']
+        filters:
+        - type: firewall-rules
+          include: ['1.2.2.128/25']
