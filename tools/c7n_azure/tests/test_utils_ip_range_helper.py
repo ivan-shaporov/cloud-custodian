@@ -62,10 +62,10 @@ class IpRangeHelperTest(BaseTest):
         data = {'whatever': ['0.0.0.0-10.10.10.10-10.10.10.10']}
         with self.assertRaises(Exception) as context:
             IpRangeHelper.parse_ip_ranges(data, 'whatever')
-        expected_error = 'Invalid range. Use x.x.x.x-y.y.y.y or x.x.x.x/y.'
+        expected_error = 'Invalid range. Use x.x.x.x-y.y.y.y or x.x.x.x or x.x.x.x/y.'
         self.assertTrue(expected_error in str(context.exception))
 
-    def test_parse_multi_single_ip(self):
+    def test_parse_single_ip(self):
         data = {'whatever': ['1.2.2.127']}
         actual = IpRangeHelper.parse_ip_ranges(data, 'whatever')
         expected = set([IPRange('1.2.2.127', '1.2.2.127')])

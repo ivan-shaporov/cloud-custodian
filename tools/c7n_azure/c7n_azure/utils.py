@@ -399,7 +399,7 @@ class IpRangeHelper(object):
         result = set()
         for r in ranges:
             if len(r) > 2:
-                raise Exception('Invalid range. Use x.x.x.x-y.y.y.y or x.x.x.x/y.')
+                raise Exception('Invalid range. Use x.x.x.x-y.y.y.y or x.x.x.x or x.x.x.x/y.')
             result.add(IPRange(*r) if len(r) == 2 else IPNetwork(r[0]))
         return result
 
