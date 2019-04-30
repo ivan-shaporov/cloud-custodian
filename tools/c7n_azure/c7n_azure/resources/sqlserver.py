@@ -44,10 +44,10 @@ class SqlServerFirewallRulesFilter(Filter):
 
             policies:
                 - name: servers-with-firewall
-                    resource: azure.sqlserver
-                    filters:
-                        - type: firewall-rules
-                            include:
+                  resource: azure.sqlserver
+                  filters:
+                      - type: firewall-rules
+                        include:
                             - '131.107.160.2-131.107.160.3'
                             - 10.20.20.0/24
     """
