@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from netaddr import IPRange
+import logging
 
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
+from c7n_azure.utils import IpRangeHelper
 from c7n_azure.utils import ThreadHelper
+from netaddr import IPRange
+
 from c7n.filters import Filter, FilterValidationError
 from c7n.filters.core import type_schema
-from c7n_azure.utils import IpRangeHelper
-import logging
 
 log = logging.getLogger('custodian.azure.sqlserver')
 
