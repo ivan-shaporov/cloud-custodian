@@ -28,7 +28,7 @@ from c7n.actions import BaseAction
 from c7n.exceptions import PolicyValidationError
 from c7n.filters import (
     CrossAccountAccessFilter, Filter, AgeFilter, ValueFilter,
-    ANNOTATION_KEY, OPERATORS)
+    ANNOTATION_KEY)
 from c7n.filters.health import HealthEventFilter
 
 from c7n.manager import resources
@@ -186,7 +186,7 @@ class SnapshotAge(AgeFilter):
     schema = type_schema(
         'age',
         days={'type': 'number'},
-        op={'type': 'string', 'enum': list(OPERATORS.keys())})
+        op={'$ref': '#/definitions/filters_common/comparison_operators'})
     date_attribute = 'StartTime'
 
 
@@ -289,7 +289,7 @@ class SnapshotUnusedFilter(Filter):
         tmpl_mgr = self.manager.get_resource_manager('launch-template-version')
         for tversion in tmpl_mgr.get_resources(
                 list(tmpl_mgr.get_asg_templates(asgs).keys())):
-            for bd in tversion['LaunchTemplateData']['BlockDeviceMappings']:
+            for bd in tversion['LaunchTemplateData'].get('BlockDeviceMappings', ()):
                 if 'Ebs' in bd and 'SnapshotId' in bd['Ebs']:
                     snap_ids.add(bd['Ebs']['SnapshotId'])
         return snap_ids
