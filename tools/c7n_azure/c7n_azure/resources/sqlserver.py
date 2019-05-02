@@ -31,26 +31,15 @@ class SqlServer(ArmResourceManager):
 
 @SqlServer.filter_registry.register('firewall-rules')
 class SqlServerFirewallRulesFilter(FirewallRulesFilter):
-    """Filters SQL servers by the firewall rules
-
-    :example:
-
-    .. code-block:: yaml
-
-            policies:
-                - name: servers-with-firewall
-                  resource: azure.sqlserver
-                  filters:
-                      - type: firewall-rules
-                        include:
-                            - '131.107.160.2-131.107.160.3'
-                            - 10.20.20.0/24
-    """
 
     def __init__(self, data, manager=None):
         super(SqlServerFirewallRulesFilter, self).__init__(data, manager)
-        self.log = logging.getLogger('custodian.azure.sqlserver')
+        self._log = logging.getLogger('custodian.azure.sqlserver')
         self.client = None
+
+    @property
+    def log(self):
+        return self._log
 
     def process(self, resources, event=None):
         self.client = self.manager.get_client()

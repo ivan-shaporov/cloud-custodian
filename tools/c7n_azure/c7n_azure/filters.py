@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 import operator
+from abc import ABCMeta, abstractmethod
 from concurrent.futures import as_completed
 from datetime import timedelta
 
+import six
 from azure.mgmt.policyinsights import PolicyInsightsClient
 from c7n_azure.tags import TagHelper
 from c7n_azure.utils import IpRangeHelper
@@ -385,7 +386,23 @@ class AzureOnHour(OnHour):
         return tag_value
 
 
+@six.add_metaclass(ABCMeta)
 class FirewallRulesFilter(Filter):
+    """Filters resources by the firewall rules
+
+    :example:
+
+    .. code-block:: yaml
+
+            policies:
+                - name: servers-with-firewall
+                  resource: azure.sqlserver
+                  filters:
+                      - type: firewall-rules
+                        include:
+                            - '131.107.160.2-131.107.160.3'
+                            - 10.20.20.0/24
+    """
 
     schema = type_schema(
         'firewall-rules',
@@ -398,7 +415,11 @@ class FirewallRulesFilter(Filter):
         super(FirewallRulesFilter, self).__init__(data, manager)
         self.policy_include = None
         self.policy_equal = None
-        self.log = logging.getLogger('custodian.azure')
+
+    @property
+    @abstractmethod
+    def log(self):
+        raise NotImplementedError()
 
     def validate(self):
         self.policy_include = IpRangeHelper.parse_ip_ranges(self.data, 'include')
@@ -429,23 +450,18 @@ class FirewallRulesFilter(Filter):
     def _check_resources(self, resources, event):
         return [r for r in resources if self._check_resource(r)]
 
+    @abstractmethod
     def _query_rules(self, resource):
         """
         Queries firewall rules for a resource. Override in concrete classes.
         :param resource:
         :return: A set of netaddr.IPRange or netaddr.IPSet with rules defined for the resource.
         """
-        return []
+        raise NotImplementedError()
 
     def _check_resource(self, resource):
-        try:
-            resource_rules = self._query_rules(resource)
-        except Exception as error:
-            self.log.warning(error)
-            return False
-
+        resource_rules = self._query_rules(resource)
         ok = self._check_rules(resource_rules)
-
         return ok
 
     def _check_rules(self, resource_rules):

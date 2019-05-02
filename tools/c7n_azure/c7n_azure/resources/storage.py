@@ -87,25 +87,14 @@ class StorageSetNetworkRulesAction(AzureBaseAction):
 
 @Storage.filter_registry.register('firewall-rules')
 class StorageFirewallRulesFilter(FirewallRulesFilter):
-    """Filters storage accounts by the firewall rules
-
-    :example:
-
-    .. code-block:: yaml
-
-            policies:
-                - name: servers-with-firewall
-                  resource: azure.storage
-                  filters:
-                      - type: firewall-rules
-                        include:
-                            - '131.107.160.2-131.107.160.3'
-                            - 10.20.20.0/24
-    """
 
     def __init__(self, data, manager=None):
         super(StorageFirewallRulesFilter, self).__init__(data, manager)
-        self.log = logging.getLogger('custodian.azure.storage')
+        self._log = logging.getLogger('custodian.azure.storage')
+
+    @property
+    def log(self):
+        return self._log
 
     def _query_rules(self, resource):
 
