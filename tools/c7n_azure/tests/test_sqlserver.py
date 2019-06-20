@@ -13,10 +13,9 @@
 # limitations under the License.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from azure_common import BaseTest
-
 import datetime
-from mock import patch
+
+from azure_common import BaseTest
 
 
 class SqlServerTest(BaseTest):
@@ -46,8 +45,7 @@ class SqlServerTest(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 1)
 
-    @patch('c7n_azure.actions.utcnow', return_value=TEST_DATE)
-    def test_metric_elastic_exclude(self, utcnow):
+    def test_metric_elastic_exclude(self):
         p = self.load_policy({
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
@@ -69,8 +67,7 @@ class SqlServerTest(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 0)
 
-    @patch('c7n_azure.actions.utcnow', return_value=TEST_DATE)
-    def test_metric_elastic_include(self, utcnow):
+    def test_metric_elastic_include(self):
         p = self.load_policy({
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
@@ -93,8 +90,7 @@ class SqlServerTest(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 1)
 
-    @patch('c7n_azure.actions.utcnow', return_value=TEST_DATE)
-    def test_metric_database(self, utcnow):
+    def test_metric_database(self):
         p = self.load_policy({
             'name': 'test-azure-sql-server',
             'resource': 'azure.sqlserver',
@@ -211,38 +207,3 @@ class SqlServerTest(BaseTest):
         }, validate=True)
         resources = p.run()
         self.assertEqual(0, len(resources))
-
-    def test_firewall_no_rules(self):
-        with self.assertRaises(Exception) as context:
-            self.load_policy({
-                'name': 'test-azure-sql-server',
-                'resource': 'azure.sqlserver',
-                'filters': [{'type': 'firewall-rules'}],
-            }, validate=True)
-
-        self.assertEqual('Must have either include or equal.', str(context.exception))
-
-    def test_firewall_both_rules(self):
-        with self.assertRaises(Exception) as context:
-            self.load_policy({
-                'name': 'test-azure-sql-server',
-                'resource': 'azure.sqlserver',
-                'filters': [
-                    {'type': 'firewall-rules',
-                     'equal': [],
-                     'include': []}],
-            }, validate=True)
-
-        self.assertEqual('Cannot have both include and equal.', str(context.exception))
-
-    def test_firewall_invalid_range(self):
-        with self.assertRaises(Exception) as context:
-            self.load_policy({
-                'name': 'test-azure-sql-server',
-                'resource': 'azure.sqlserver',
-                'filters': [
-                    {'type': 'firewall-rules',
-                     'include': ['0.0.0.1-0.0.0.0']}],
-            })
-
-        self.assertEqual('lower bound IP greater than upper bound!', str(context.exception))

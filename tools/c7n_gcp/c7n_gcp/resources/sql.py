@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import jmespath
 import re
 
 from c7n.utils import type_schema
 from c7n_gcp.actions import MethodAction
 from c7n_gcp.provider import resources
 from c7n_gcp.query import QueryResourceManager, TypeInfo, ChildResourceManager, ChildTypeInfo
+from datetime import datetime
+from dateutil.parser import parse
 
 
 @resources.register('sql-instance')
@@ -100,3 +103,103 @@ class SqlDatabase(ChildResourceManager):
                         'database': resource_info['name'],
                         'instance': resource_info['instance']}
             )
+
+
+@resources.register('sql-user')
+class SqlUser(ChildResourceManager):
+
+    class resource_type(ChildTypeInfo):
+        service = 'sqladmin'
+        version = 'v1beta4'
+        component = 'users'
+        enum_spec = ('list', 'items[]', None)
+        id = 'name'
+        parent_spec = {
+            'resource': 'sql-instance',
+            'child_enum_params': [
+                ('name', 'instance')
+            ]
+        }
+
+
+class SqlInstanceChildWithSelfLink(ChildResourceManager):
+    """A ChildResourceManager for resources that reference SqlInstance in selfLink.
+    """
+
+    def _get_parent_resource_info(self, child_instance):
+        """
+        :param child_instance: a dictionary to get parent parameters from
+        :return: project_id and database_id extracted from child_instance
+        """
+        return {'project_id': re.match('.*?/projects/(.*?)/instances/.*',
+                                    child_instance['selfLink']).group(1),
+                'database_id': child_instance['instance']}
+
+
+@resources.register('sql-backup-run')
+class SqlBackupRun(SqlInstanceChildWithSelfLink):
+
+    class resource_type(ChildTypeInfo):
+        service = 'sqladmin'
+        version = 'v1beta4'
+        component = 'backupRuns'
+        enum_spec = ('list', 'items[]', None)
+        get_requires_event = True
+        id = 'id'
+        parent_spec = {
+            'resource': 'sql-instance',
+            'child_enum_params': [
+                ('name', 'instance')
+            ]
+        }
+
+        @staticmethod
+        def get(client, event):
+            project = jmespath.search('protoPayload.response.targetProject', event)
+            instance = jmespath.search('protoPayload.response.targetId', event)
+            insert_time = jmespath.search('protoPayload.response.insertTime', event)
+            parameters = {'project': project,
+                          'instance': instance,
+                          'id': SqlBackupRun.resource_type._from_insert_time_to_id(insert_time)}
+            return client.execute_command('get', parameters)
+
+        @staticmethod
+        def _from_insert_time_to_id(insert_time):
+            """
+            Backup Run id is not available in a log record directly.
+            Fortunately, as it is an integer timestamp representation,
+            it can be retrieved by converting raw insert_time value.
+
+            :param insert_time: a UTC ISO formatted date time string
+            :return: an integer number of microseconds since unix epoch
+            """
+            delta = parse(insert_time).replace(tzinfo=None) - datetime.utcfromtimestamp(0)
+            return int(delta.total_seconds()) * 1000 + int(delta.microseconds / 1000)
+
+
+@resources.register('sql-ssl-cert')
+class SqlSslCert(SqlInstanceChildWithSelfLink):
+
+    class resource_type(ChildTypeInfo):
+        service = 'sqladmin'
+        version = 'v1beta4'
+        component = 'sslCerts'
+        enum_spec = ('list', 'items[]', None)
+        get_requires_event = True
+        id = 'sha1Fingerprint'
+        parent_spec = {
+            'resource': 'sql-instance',
+            'child_enum_params': [
+                ('name', 'instance')
+            ]
+        }
+
+        @staticmethod
+        def get(client, event):
+            self_link = jmespath.search('protoPayload.response.clientCert.certInfo.selfLink', event)
+            self_link_re = '.*?/projects/(.*?)/instances/(.*?)/sslCerts/(.*)'
+            project, instance, sha_1_fingerprint = re.match(self_link_re, self_link).groups()
+            parameters = {'project': project,
+                          'instance': instance,
+                          'sha1Fingerprint': sha_1_fingerprint}
+            return client.execute_command('get', parameters)

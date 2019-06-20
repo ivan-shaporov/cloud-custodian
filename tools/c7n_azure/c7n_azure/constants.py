@@ -9,6 +9,7 @@ FUNCTION_TIME_TRIGGER_MODE = 'azure-periodic'
 FUNCTION_KEY_URL = 'hostruntime/admin/host/systemkeys/_master?api-version=2018-02-01'
 FUNCTION_CONSUMPTION_BLOB_CONTAINER = 'cloud-custodian-packages'
 FUNCTION_PACKAGE_SAS_EXPIRY_DAYS = 365 * 10  # 10 years
+FUNCTION_AUTOSCALE_NAME = 'cloud_custodian_default'
 
 """
 Event Grid Mode
@@ -48,6 +49,7 @@ Authentication Resource
 """
 RESOURCE_ACTIVE_DIRECTORY = 'https://management.core.windows.net/'
 RESOURCE_STORAGE = 'https://storage.azure.com/'
+RESOURCE_VAULT = 'https://vault.azure.net'
 
 """
 Threading Variable
@@ -59,3 +61,38 @@ DEFAULT_CHUNK_SIZE = 20
 Custom Retry Code Variables
 """
 DEFAULT_MAX_RETRY_AFTER = 30
+
+"""
+KeyVault url templates
+"""
+TEMPLATE_KEYVAULT_URL = 'https://{0}.vault.azure.net'
+
+"""
+Azure Functions Host Configuration
+"""
+FUNCTION_HOST_CONFIG = {
+    "version": "2.0",
+    "healthMonitor": {
+        "enabled": True,
+        "healthCheckInterval": "00:00:10",
+        "healthCheckWindow": "00:02:00",
+        "healthCheckThreshold": 6,
+        "counterThreshold": 0.80
+    },
+    "functionTimeout": "00:05:00",
+    "logging": {
+        "fileLoggingMode": "debugOnly"
+    },
+    "extensions": {
+        "http": {
+            "routePrefix": "api",
+            "maxConcurrentRequests": 5,
+            "maxOutstandingRequests": 30
+        }
+    }
+}
+
+FUNCTION_EXTENSION_BUNDLE_CONFIG = {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[1.*, 2.0.0)"
+}

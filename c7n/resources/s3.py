@@ -91,19 +91,21 @@ MAX_COPY_SIZE = 1024 * 1024 * 1024 * 2
 @resources.register('s3')
 class S3(query.QueryResourceManager):
 
-    class resource_type(object):
+    class resource_type(query.TypeInfo):
         service = 's3'
-        type = 'bucket'
+        arn_type = ''
         enum_spec = ('list_buckets', 'Buckets[]', None)
         detail_spec = ('list_objects', 'Bucket', 'Contents[]')
         name = id = 'Name'
-        filter_name = None
         date = 'CreationDate'
         dimension = 'BucketName'
         config_type = 'AWS::S3::Bucket'
 
     filter_registry = filters
     action_registry = actions
+
+    def get_arns(self, resources):
+        return ["arn:aws:s3:::{}".format(r["Name"]) for r in resources]
 
     def get_source(self, source_type):
         if source_type == 'describe':
@@ -130,6 +132,9 @@ class DescribeS3(query.DescribeSource):
                 zip(itertools.repeat(self.manager.session_factory), buckets))
             results = list(filter(None, results))
             return results
+
+    def get_resources(self, bucket_names):
+        return [{'Name': b} for b in bucket_names]
 
 
 class ConfigS3(query.ConfigSource):
@@ -971,7 +976,7 @@ class BucketNotificationFilter(ValueFilter):
         required=['kind'],
         kind={'type': 'string', 'enum': ['lambda', 'sns', 'sqs']},
         rinherit=ValueFilter.schema)
-
+    schema_alias = False
     annotation_key = 'c7n:MatchedNotificationConfigurationIds'
 
     permissions = ('s3:GetBucketNotification',)
@@ -2308,7 +2313,7 @@ class DataEvents(Filter):
 class Inventory(ValueFilter):
     """Filter inventories for a bucket"""
     schema = type_schema('inventory', rinherit=ValueFilter.schema)
-
+    schema_alias = False
     permissions = ('s3:GetInventoryConfiguration',)
 
     def process(self, buckets, event=None):
