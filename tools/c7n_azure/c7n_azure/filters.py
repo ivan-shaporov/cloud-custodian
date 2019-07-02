@@ -481,9 +481,23 @@ class FirewallRulesFilter(Filter):
 
 
 class CostFilter(ValueFilter):
-    """Filters resources by the cost
+    """
+    Filter resources by the cost consumed over a timeframe.
+    Timeframe can be either number of days before today or one of:
 
-    :example:
+    BillingMonthToDate
+    MonthToDate
+    TheLastBillingMonth
+    TheLastMonth
+    TheLastWeek
+    TheLastYear
+    WeekToDate
+    YearToDate
+
+
+    :examples:
+
+    SQL servers that were cost more than 2000 in the last month.
 
     .. code-block:: yaml
 
@@ -492,9 +506,21 @@ class CostFilter(ValueFilter):
                   resource: azure.sqlserver
                   filters:
                   - type: cost
-                    timeframe: MonthToDate
-                    key: cost
-                    op: ge
+                    timeframe: TheLastMonth
+                    op: gt
+                    value: 2000
+
+    SQL servers that were cost more than 2000 in the last 30 days not including today.
+
+    .. code-block:: yaml
+
+            policies:
+                - name: expensive sql servers
+                  resource: azure.sqlserver
+                  filters:
+                  - type: cost
+                    timeframe: 30
+                    op: gt
                     value: 2000
     """
 
