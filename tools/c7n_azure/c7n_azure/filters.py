@@ -20,6 +20,7 @@ import six
 from azure.mgmt.costmanagement.models import QueryDefinition, QueryDataset, \
     QueryAggregation, QueryGrouping, QueryTimePeriod, TimeframeType
 from azure.mgmt.policyinsights import PolicyInsightsClient
+
 from c7n_azure.tags import TagHelper
 from c7n_azure.utils import IpRangeHelper, ResourceIdParser, StringUtils
 from c7n_azure.utils import Math
