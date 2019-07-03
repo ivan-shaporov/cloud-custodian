@@ -14,9 +14,10 @@
 
 import six
 from c7n_azure.actions.delete import DeleteAction
+from c7n_azure.actions.lock import LockAction
 from c7n_azure.actions.tagging import Tag, AutoTagUser, RemoveTag, TagTrim, TagDelayedAction
-from c7n_azure.filters import (MetricFilter, TagActionFilter,
-                               DiagnosticSettingsFilter, PolicyCompliantFilter)
+from c7n_azure.filters import (CostFilter, MetricFilter, TagActionFilter,
+                               DiagnosticSettingsFilter, PolicyCompliantFilter, ResourceLockFilter)
 from c7n_azure.provider import resources
 from c7n_azure.query import QueryResourceManager, QueryMeta, ChildResourceManager, TypeInfo, \
     ChildTypeInfo, TypeMeta
@@ -45,6 +46,21 @@ class ArmTypeInfo(TypeInfo):
 
 @six.add_metaclass(QueryMeta)
 class ArmResourceManager(QueryResourceManager):
+    """Azure Arm Resource
+
+    :example:
+
+    This policy will find all ARM resources with the tag 'Tag1' present
+
+    .. code-block:: yaml
+
+        policies
+          - name: find-resources-with-Tag1
+            resource: azure.armresource
+            filters:
+              - tag:Tag1: present
+
+    """
 
     class resource_type(ArmTypeInfo):
         service = 'azure.mgmt.resource'
@@ -84,8 +100,12 @@ class ArmResourceManager(QueryResourceManager):
                     klass.filter_registry.register('marked-for-op', TagActionFilter)
                     klass.action_registry.register('mark-for-op', TagDelayedAction)
 
+                klass.filter_registry.register('cost', CostFilter)
                 klass.filter_registry.register('metric', MetricFilter)
                 klass.filter_registry.register('policy-compliant', PolicyCompliantFilter)
+                klass.filter_registry.register('resource-lock', ResourceLockFilter)
+
+                klass.action_registry.register('lock', LockAction)
 
                 if resource != 'resourcegroup':
                     klass.action_registry.register('delete', DeleteAction)
