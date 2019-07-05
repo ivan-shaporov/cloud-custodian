@@ -712,7 +712,7 @@ class CostFilter(ValueFilter):
     schema = type_schema('cost',
         rinherit=ValueFilter.schema,
         required=['timeframe'],
-		key=None,
+        key=None,
         **{
             'timeframe': {
                 'oneOf': [
