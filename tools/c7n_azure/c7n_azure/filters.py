@@ -712,6 +712,7 @@ class CostFilter(ValueFilter):
     schema = type_schema('cost',
         rinherit=ValueFilter.schema,
         required=['timeframe'],
+		key=None,
         **{
             'timeframe': {
                 'oneOf': [
@@ -726,7 +727,6 @@ class CostFilter(ValueFilter):
     def __init__(self, data, manager=None):
         data['key'] = 'PreTaxCost'  # can also be Currency, but now only PreTaxCost is supported
         super(CostFilter, self).__init__(data, manager)
-        self.client = None
         self.cached_costs = None
 
     def __call__(self, i):
@@ -769,11 +769,9 @@ class CostFilter(ValueFilter):
         time_period = None
 
         if timeframe not in CostFilter.preset_timeframes:
-            end_time = utcnow() - timedelta(days=1)
+            end_time = utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             start_time = end_time - timedelta(days=timeframe)
             timeframe = 'Custom'
-            start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_time = end_time.replace(hour=0, minute=0, second=0, microsecond=0)
             time_period = QueryTimePeriod(from_property=start_time, to=end_time)
 
         definition = QueryDefinition(timeframe=timeframe, time_period=time_period, dataset=dataset)
